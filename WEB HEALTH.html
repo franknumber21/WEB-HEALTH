@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthFullFor U! - Ingredients</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom font import for 'Inter' - Tailwind default, but good practice to ensure */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fdee; /* Very light, healthy green/off-white background */
+        }
+        /* Ensure the main content uses the full viewport height minus header and footer */
+        .main-content {
+            /* 48px header + 48px padding + 64px footer = 160px (approx 10rem) */
+            min-height: calc(100vh - 10rem); 
+        }
+        .nav-icon {
+            /* Styles for the navigation bar icons */
+            width: 24px;
+            height: 24px;
+            stroke-width: 2.5;
+        }
+        /* Aspect ratio container for responsive video embedding */
+        .video-responsive {
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        /* Style for the action buttons at the top */
+        .action-button {
+            transition: all 0.2s;
+            padding: 10px 15px; /* Adjust padding for better look */
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- 1. FIXED HEADER -->
+    <header class="sticky top-0 z-10 bg-white shadow-md p-4 flex flex-col gap-3 rounded-b-xl">
+        <div class="text-3xl font-extrabold text-[#10b981] text-center">
+            HealthFullFor U!
+        </div>
+        <!-- Search Bar area -->
+        <div class="flex items-center space-x-2">
+            <button class="p-3 bg-white text-[#10b981] rounded-xl shadow-lg border border-gray-200 hover:bg-gray-50 transition">
+                <i data-lucide="search" class="w-6 h-6"></i>
+            </button>
+            <input type="text" placeholder="Search bar / Recipes..." class="flex-grow p-3 border-2 border-[#a7f3d0] rounded-xl shadow-inner focus:border-[#059669] focus:ring-0 transition">
+        </div>
+    </header>
+
+    <!-- 2. MAIN SCROLLABLE CONTENT AREA -->
+    <main class="flex-grow overflow-y-auto p-4 main-content">
+        <div class="space-y-4 pb-20">
+
+            <!-- Dynamic Recommendation Area Container -->
+            <div id="recommendation-area">
+
+                <!-- Action Button Area -->
+                <div class="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-3 mb-6">
+                    <button id="clear-ingredients-button" onclick="resetIngredients()" 
+                            class="action-button flex items-center justify-center space-x-2 bg-gray-200 text-gray-700 font-bold rounded-xl shadow-lg border-2 border-gray-300 hover:bg-gray-300">
+                        <i data-lucide="refresh-ccw" class="w-5 h-5"></i>
+                        <span>Clear Ingredients</span>
+                    </button>
+                    <button id="recommend-dish-button" onclick="handleRecommendDish()" 
+                            class="action-button flex items-center justify-center space-x-2 bg-[#10b981] text-white font-bold rounded-xl shadow-lg border-2 border-[#059669] hover:bg-[#059669]">
+                        <i data-lucide="cooking-pot" class="w-5 h-5"></i>
+                        <span>Find My Recipe!</span>
+                    </button>
+                </div>
+
+
+                <!-- State 1: Placeholder/Initial View (Visible by default) -->
+                <div id="initial-placeholder">
+                    <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-[#a7f3d0] rounded-lg flex items-center justify-center text-[#059669] font-bold text-lg">
+                                <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+                            </div>
+                            <span class="text-lg font-semibold text-gray-700">Recommended Dish</span>
+                        </div>
+                        <span class="text-sm text-gray-500">Select ingredients below</span>
+                    </div>
+                </div>
+
+                <!-- State 2: List of Recommended Recipes (Hidden by default) -->
+                <div id="recommended-list" class="hidden space-y-3">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Top Recipes Based on Your Ingredients</h3>
+                    <!-- Recipe summary cards will be injected here by JS -->
+                </div>
+
+                <!-- State 3: Detailed View of Selected Recipe (Hidden by default) -->
+                <div id="detailed-recipe-view" class="hidden bg-white p-6 rounded-xl shadow-2xl border-4 border-[#10b981]">
+                    <button id="back-to-list-button" class="text-sm text-gray-500 hover:text-[#059669] mb-4 flex items-center space-x-1">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        <span>Back to Recommendations</span>
+                    </button>
+                    <h3 class="text-2xl font-bold text-[#059669] mb-4">Recipe Details</h3>
+                    
+                    <!-- Video Link Area -->
+                    <div id="video-container" class="video-responsive rounded-xl mb-4"></div>
+
+                    <h4 id="dish-name" class="text-xl font-semibold text-gray-800 mb-4"></h4>
+                    <div id="dish-ingredients-list" class="mb-4 text-gray-600">
+                        <p class="font-medium text-lg mb-2">Ingredients Used:</p>
+                        <ul id="ingredients-list-detail" class="list-disc list-inside space-y-1 pl-4 text-sm"></ul>
+                    </div>
+                    <p id="dish-description" class="text-gray-700 italic border-t pt-3"></p>
+                </div>
+                
+            </div>
+            <!-- End Dynamic Recommendation Area Container -->
+
+            <!-- Categories Section Title -->
+            <h2 class="text-xl font-bold text-gray-800 border-b-2 border-[#d1fae5] pb-2 pt-4">Ingredients & Categories</h2>
+
+            <!-- CATEGORY: MEATS -->
+            <div class="rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                <div id="header-meats" class="bg-white p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition" onclick="toggleCollapse('ingredients-meats', 'icon-meats')">
+                    <span class="text-lg font-medium text-gray-800">Meats</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500 hidden sm:block">7+ items available</span>
+                        <i data-lucide="chevron-down" id="icon-meats" class="w-5 h-5 text-gray-500 transform transition-transform duration-300"></i>
+                    </div>
+                </div>
+                <div id="ingredients-meats" class="hidden bg-gray-50 border-t border-gray-200">
+                    <div class="p-4 space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-chicken-breast" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Chicken Breast</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-ground-beef" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Ground Beef (Lean)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-salmon" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Salmon Fillet</span>
+                        </label>
+                         <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-pork-tenderloin" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Pork Tenderloin</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-turkey-breast" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Turkey Breast</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-cod-fillet" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Cod Fillet</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-chicken-sausage" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Sausage (Chicken)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CATEGORY: VEGETABLES -->
+            <div class="rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                <div id="header-vegetables" class="bg-white p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition" onclick="toggleCollapse('ingredients-vegetables', 'icon-vegetables')">
+                    <span class="text-lg font-medium text-gray-800">Vegetables</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500 hidden sm:block">15 items available</span>
+                        <i data-lucide="chevron-down" id="icon-vegetables" class="w-5 h-5 text-gray-500 transform transition-transform duration-300"></i>
+                    </div>
+                </div>
+                <div id="ingredients-vegetables" class="hidden bg-gray-50 border-t border-gray-200">
+                    <div class="p-4 space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-spinach" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Spinach</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-broccoli" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Broccoli</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-carrots" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Carrots</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-bell-peppers" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Bell Peppers (Mixed)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-sweet-potato" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Sweet Potato</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-onion" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Onion (Yellow)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-mushrooms" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Mushrooms</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-kale" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Kale</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CATEGORY: FRUITS -->
+            <div class="rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                <div id="header-fruits" class="bg-white p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition" onclick="toggleCollapse('ingredients-fruits', 'icon-fruits')">
+                    <span class="text-lg font-medium text-gray-800">Fruits</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500 hidden sm:block">10 items available</span>
+                        <i data-lucide="chevron-down" id="icon-fruits" class="w-5 h-5 text-gray-500 transform transition-transform duration-300"></i>
+                    </div>
+                </div>
+                <div id="ingredients-fruits" class="hidden bg-gray-50 border-t border-gray-200">
+                    <div class="p-4 space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-apples" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Apples (Green)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-bananas" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Bananas</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-blueberries" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Blueberries</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-oranges" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Oranges</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-strawberries" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Strawberries</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-avocado" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Avocado</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-lemon" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Lemon</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-grapes" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Grapes</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CATEGORY: DAIRY -->
+            <div class="rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                <div id="header-dairy" class="bg-white p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition" onclick="toggleCollapse('ingredients-dairy', 'icon-dairy')">
+                    <span class="text-lg font-medium text-gray-800">Dairy</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500 hidden sm:block">8 items available</span>
+                        <i data-lucide="chevron-down" id="icon-dairy" class="w-5 h-5 text-gray-500 transform transition-transform duration-300"></i>
+                    </div>
+                </div>
+                <div id="ingredients-dairy" class="hidden bg-gray-50 border-t border-gray-200">
+                    <div class="p-4 space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-milk" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Low-Fat Milk</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-cheese" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Cheddar Cheese</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-yogurt" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Greek Yogurt</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-eggs" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Eggs (Large)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-feta" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Feta Cheese</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-butter" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Butter (Unsalted)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-cottage-cheese" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Cottage Cheese</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="ing-ricotta" class="form-checkbox h-5 w-5 text-[#10b981] rounded border-gray-300">
+                            <span class="text-base text-gray-700">Ricotta</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Spacer Content -->
+            <div class="h-10"></div>
+            <p class="text-center text-gray-400 text-xs">End of Categories</p>
+
+        </div>
+    </main>
+
+    <!-- 3. FIXED FOOTER NAVIGATION -->
+    <footer class="fixed bottom-0 left-0 right-0 z-20 bg-white shadow-[0_-5px_15px_-3px_rgba(0,0,0,0.1)] p-2 rounded-t-xl">
+        <nav class="flex justify-around items-center h-16">
+            
+            <!-- Ladder (Leaderboard/Stats) -->
+            <button class="flex flex-col items-center p-2 text-gray-500 hover:text-[#059669] transition">
+                <i data-lucide="bar-chart-3" class="nav-icon"></i>
+                <span class="text-xs mt-1">Ladder</span>
+            </button>
+
+            <!-- List (Active/Current Screen) -->
+            <button class="flex flex-col items-center p-2 text-[#059669] border-t-2 border-[#059669] -mt-2 pt-2 transition">
+                <i data-lucide="list-checks" class="nav-icon"></i>
+                <span class="text-xs mt-1 font-semibold">List</span>
+            </button>
+
+            <!-- Favourite -->
+            <button class="flex flex-col items-center p-2 text-gray-500 hover:text-yellow-500 transition">
+                <i data-lucide="heart" class="nav-icon"></i>
+                <span class="text-xs mt-1">Favourite</span>
+            </button>
+
+            <!-- Setting -->
+            <button class="flex flex-col items-center p-2 text-gray-500 hover:text-gray-700 transition">
+                <i data-lucide="settings" class="nav-icon"></i>
+                <span class="text-xs mt-1">Setting</span>
+            </button>
+            
+        </nav>
+    </footer>
+
+    <!-- JAVASCRIPT FOR COLLAPSE, DISH RECOMMENDATION, AND VIDEO FETCHING FUNCTIONALITY -->
+    <script>
+        // --- API Setup (Mandatory) ---
+        const apiKey = ""; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        // --- RECIPE DATABASE (Mock Data) ---
+        const recipes = [
+            {
+                id: 1,
+                name: "Healthy Chicken and Veggie Stir-Fry",
+                coreIngredients: ["Chicken Breast", "Broccoli", "Carrots", "Onion (Yellow)"],
+                description: "A quick, high-protein weeknight meal! We'll use the Chicken, Broccoli, Carrots, and Onion for a balanced stir-fry. It requires oil and seasoning, which are assumed to be staples.",
+                searchQuery: "Healthy Chicken Broccoli Stir Fry Tutorial"
+            },
+            {
+                id: 2,
+                name: "Fresh Citrus Cod and Avocado Salad",
+                coreIngredients: ["Cod Fillet", "Avocado", "Lemon", "Spinach"],
+                description: "A light, zesty, and nutrient-packed salad. Utilizing Cod, creamy Avocado, fresh Spinach leaves, and a Lemon vinaigrette.",
+                searchQuery: "Cod Avocado Salad Recipe Video"
+            },
+            {
+                id: 3,
+                name: "Morning Power Smoothie",
+                coreIngredients: ["Bananas", "Greek Yogurt", "Blueberries", "Low-Fat Milk"],
+                description: "A perfect grab-and-go breakfast blend with protein and antioxidants. Using Yogurt, Bananas, Blueberries, and Milk.",
+                searchQuery: "Greek Yogurt Banana Blueberry Smoothie"
+            },
+            {
+                id: 4,
+                name: "Protein-Packed Cottage Cheese & Fruit Bowl",
+                coreIngredients: ["Cottage Cheese", "Strawberries", "Apples (Green)"],
+                description: "A simple, protein-rich snack. Combining Cottage Cheese with fresh Strawberries and crisp Apples.",
+                searchQuery: "Cottage Cheese and Fruit Bowl Recipe"
+            },
+            {
+                id: 5,
+                name: "Lean Beef Stuffed Sweet Potatoes",
+                coreIngredients: ["Ground Beef (Lean)", "Sweet Potato", "Mushrooms"],
+                description: "A comforting and balanced meal. Stuff roasted Sweet Potatoes with seasoned Lean Ground Beef and sautéed Mushrooms.",
+                searchQuery: "Ground Beef Stuffed Sweet Potato Recipe"
+            },
+            {
+                id: 6,
+                name: "Simple Feta & Spinach Scramble",
+                coreIngredients: ["Eggs (Large)", "Feta Cheese", "Spinach"],
+                description: "A quick, savory breakfast or light dinner. Eggs are scrambled with salty Feta and wilted Spinach for a Mediterranean twist.",
+                searchQuery: "Feta and Spinach Egg Scramble"
+            },
+            {
+                id: 7,
+                name: "Zesty Lemon Chicken with Carrots",
+                coreIngredients: ["Chicken Breast", "Lemon", "Carrots"],
+                description: "A simple, bright, and low-fat baked chicken dish seasoned with lemon and served with roasted carrots.",
+                searchQuery: "Lemon Chicken and Carrot Bake Recipe"
+            },
+            {
+                id: 8,
+                name: "Ricotta and Spinach Pasta Sauce",
+                coreIngredients: ["Ricotta", "Spinach", "Onion (Yellow)"],
+                description: "A creamy but lighter sauce. Ricotta, fresh Spinach, and sautéed Onion blended for a healthy pasta topping (pasta not listed as an ingredient).",
+                searchQuery: "Ricotta and Spinach Pasta Sauce Recipe"
+            }
+        ];
+
+        // Global variable to hold the currently checked ingredients for easy access
+        let currentCheckedIngredients = [];
+        
+        // DOM element references
+        const initialPlaceholder = document.getElementById('initial-placeholder');
+        const listContainer = document.getElementById('recommended-list');
+        const detailsContainer = document.getElementById('detailed-recipe-view');
+        const clearButton = document.getElementById('clear-ingredients-button');
+
+
+        // Function to toggle the visibility of the ingredient list
+        function toggleCollapse(contentId, iconId) {
+            const content = document.getElementById(contentId);
+            const icon = document.getElementById(iconId);
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+        
+        // **FUNCTION: Resets all ingredient checkboxes and the results area**
+        window.resetIngredients = function() { // Expose to global scope for button click
+             const ingredientCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+             ingredientCheckboxes.forEach(checkbox => {
+                 checkbox.checked = false;
+             });
+             // Clear the global array
+             currentCheckedIngredients = [];
+             
+             // Reset the results display to the initial placeholder view
+             listContainer.classList.add('hidden');
+             detailsContainer.classList.add('hidden');
+             initialPlaceholder.classList.remove('hidden');
+             
+             // Provide visual feedback
+             clearButton.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+             clearButton.classList.add('bg-green-100', 'text-[#059669]', 'border-[#10b981]');
+             
+             setTimeout(() => {
+                clearButton.classList.remove('bg-green-100', 'text-[#059669]', 'border-[#10b981]');
+                clearButton.classList.add('bg-gray-200', 'hover:bg-gray-300');
+             }, 500);
+        }
+
+        // Helper to show loading state in the video container
+        function showVideoLoading(containerEl) {
+             // Reset styling for the container before showing loading
+            containerEl.className = 'video-responsive rounded-xl mb-4 flex items-center justify-center p-8 bg-white border-2 border-dashed border-[#a7f3d0]';
+
+            containerEl.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-4">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#059669]"></div>
+                    <p class="mt-2 text-sm text-gray-600">Finding best video link...</p>
+                </div>
+            `;
+        }
+        
+        // Helper to display the video link as a button
+        function displayVideoLink(containerEl, dishName, videoUrl, isFallback = false) {
+            containerEl.className = 'video-responsive rounded-xl mb-4 flex flex-col items-center justify-center py-8 bg-gray-50 text-center border-2 border-dashed border-[#a7f3d0]';
+
+            const icon = isFallback ? 'alert-triangle' : 'youtube';
+            const color = isFallback ? 'text-yellow-600' : 'text-red-600';
+            const buttonText = isFallback ? `Search YouTube for "${dishName}"` : `Watch Tutorial`;
+            const buttonColor = isFallback ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-red-600 hover:bg-red-700';
+
+            containerEl.innerHTML = `
+                <i data-lucide="${icon}" class="w-8 h-8 ${color} mb-3"></i>
+                <p class="text-sm font-medium text-gray-700 mb-4">${isFallback ? 'Could not find a direct video link. Click below to search for a tutorial:' : 'Tap the button to watch a tutorial:'}</p>
+                <a href="${videoUrl}" target="_blank" rel="noopener noreferrer" 
+                   class="${buttonColor} text-white font-bold py-3 px-6 rounded-full shadow-xl transition duration-300 active:scale-[.98] flex items-center space-x-2">
+                   <i data-lucide="${isFallback ? 'search' : 'play-circle'}" class="w-5 h-5"></i>
+                   <span>${buttonText}</span>
+                </a>
+            `;
+            // Re-initialize Lucide icons for the newly injected content
+            lucide.createIcons();
+        }
+
+        // Core function to fetch recipe video URL (using Gemini API for real-time search)
+        async function fetchRecipeVideo(searchTopic) {
+            // Fallback URL: direct YouTube search results page
+            const fallbackSearchUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(searchTopic);
+            
+            const prompt = `Find the direct, modern YouTube video URL for a recipe tutorial titled: "${searchTopic}". Prioritize short, high-quality cooking videos.`;
+            const maxRetries = 5;
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: {
+                    parts: [{ text: "You are a specialized search agent. Your sole purpose is to find a single, valid YouTube video URL based on the search topic. Respond with ONLY the URL string, nothing else. Do not use markdown formatting." }]
+                },
+            };
+
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`API returned status ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const generatedUrl = candidate.content.parts[0].text.trim();
+                        
+                        // Simple validation: check if it looks like a YouTube URL
+                        if (generatedUrl.includes('youtube.com/watch') || generatedUrl.includes('youtu.be/')) {
+                            return { url: generatedUrl, isFallback: false };
+                        }
+                    }
+                    
+                    // If the model didn't return a clean URL, we'll try to find one in the search grounding data.
+                    const groundingMetadata = candidate?.groundingMetadata;
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        const youtubeSource = groundingMetadata.groundingAttributions
+                            .find(attr => attr.web?.uri?.includes('youtube.com/watch') || attr.web?.uri?.includes('youtu.be/'));
+                        
+                        if (youtubeSource) {
+                            return { url: youtubeSource.web.uri, isFallback: false };
+                        }
+                    }
+                    
+                    // If search was conducted but yielded no direct video link, we'll return the search fallback.
+                    console.warn(`Search for "${searchTopic}" failed to produce a direct URL.`);
+                    return { url: fallbackSearchUrl, isFallback: true };
+
+                } catch (error) {
+                    if (attempt < maxRetries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+                    } else {
+                        console.error("All API attempts failed. Returning search link.", error);
+                    }
+                }
+            }
+            return { url: fallbackSearchUrl, isFallback: true };
+        }
+
+        // Renders the detailed view of a single selected recipe
+        async function showRecipeDetails(recipe, checkedIngredients) {
+            
+            // Hide list, show details
+            listContainer.classList.add('hidden');
+            detailsContainer.classList.remove('hidden');
+
+            const dishNameEl = document.getElementById('dish-name');
+            const ingredientsListDetailEl = document.getElementById('ingredients-list-detail');
+            const dishDescriptionEl = document.getElementById('dish-description');
+            const videoContainerEl = document.getElementById('video-container');
+
+            dishNameEl.textContent = recipe.name;
+            dishDescriptionEl.textContent = recipe.description;
+            ingredientsListDetailEl.innerHTML = '';
+            videoContainerEl.innerHTML = '';
+
+            // Populate list with ingredients
+            recipe.coreIngredients.forEach(ing => {
+                const listItem = document.createElement('li');
+                if (checkedIngredients.includes(ing)) {
+                    listItem.innerHTML = `<span class="font-semibold text-gray-800">${ing} (Checked)</span>`;
+                } else {
+                    listItem.innerHTML = `<span class="italic text-red-500">${ing} (Missing)</span>`;
+                }
+                ingredientsListDetailEl.appendChild(listItem);
+            });
+
+            // Show loading state and fetch video link dynamically
+            showVideoLoading(videoContainerEl);
+            const { url: videoUrl, isFallback } = await fetchRecipeVideo(recipe.searchQuery);
+            displayVideoLink(videoContainerEl, recipe.name, videoUrl, isFallback);
+
+             detailsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Renders the list of multiple recommended recipes
+        function renderRecipeList(rankedMatches) {
+            
+            initialPlaceholder.classList.add('hidden');
+            detailsContainer.classList.add('hidden'); // Hide details view if active
+            listContainer.classList.remove('hidden');
+            listContainer.innerHTML = '<h3 class="text-xl font-bold text-gray-800 mb-4">Top Recipes Based on Your Ingredients</h3>'; // Reset title
+
+            if (rankedMatches.length === 0) {
+                 listContainer.innerHTML += `
+                    <div class="p-6 text-center bg-white rounded-xl shadow-lg border border-gray-100">
+                        <i data-lucide="info" class="w-8 h-8 inline-block text-gray-500"></i>
+                        <p class="mt-3 text-lg text-gray-700 font-semibold">No Strong Matches Found</p>
+                        <p class="mt-1 text-sm text-gray-500">Try selecting a few more key ingredients to get a recommendation.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            rankedMatches.forEach(match => {
+                const percentage = Math.round((match.score / match.recipe.coreIngredients.length) * 100);
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-xl shadow-lg border-l-4 border-[#10b981] cursor-pointer hover:bg-gray-50 transition';
+                card.setAttribute('data-recipe-id', match.recipe.id);
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex flex-col">
+                            <span class="text-lg font-semibold text-gray-800">${match.recipe.name}</span>
+                            <span class="text-xs text-gray-500">${match.recipe.coreIngredients.length} ingredients needed</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xl font-bold text-[#059669]">${percentage}%</span>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-500"></i>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2 line-clamp-2">${match.recipe.description.split('. ')[0]}...</p>
+                `;
+                card.onclick = () => showRecipeDetails(match.recipe, currentCheckedIngredients);
+                listContainer.appendChild(card);
+            });
+            
+            // Re-initialize Lucide Icons for the new cards
+            lucide.createIcons();
+            listContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Main function to handle the dish recommendation logic
+        window.handleRecommendDish = function() { // Expose to global scope for button click
+            const ingredientCheckboxes = document.querySelectorAll(
+                'input[type="checkbox"]'
+            );
+            
+            // 1. Collect all checked ingredients
+            currentCheckedIngredients = [];
+            ingredientCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const label = checkbox.closest('label');
+                    const ingredientName = label ? label.querySelector('span').textContent.trim() : 'Unknown Ingredient';
+                    currentCheckedIngredients.push(ingredientName);
+                }
+            });
+
+            if (currentCheckedIngredients.length === 0) {
+                // If no ingredients selected, ensure initial view is shown and alert
+                listContainer.classList.add('hidden');
+                detailsContainer.classList.add('hidden');
+                initialPlaceholder.classList.remove('hidden');
+                
+                // Using alert() as a temporary simple non-modal feedback as per previous context
+                alert("Please check at least one ingredient to get a recipe recommendation!"); 
+                return;
+            }
+
+            // 2. Score and rank all recipes
+            const rankedRecipes = recipes.map(recipe => {
+                const score = recipe.coreIngredients.filter(ing => currentCheckedIngredients.includes(ing)).length;
+                return { recipe, score };
+            }).sort((a, b) => b.score - a.score); // Sort by score descending
+
+            // 3. Filter for valid matches (score > 0) and take the top 3
+            const topMatches = rankedRecipes.filter(match => match.score > 0).slice(0, 3);
+            
+            // 4. Render the list of top matches
+            renderRecipeList(topMatches);
+        }
+
+        // Event listener setup
+        document.addEventListener('DOMContentLoaded', () => {
+            const backButton = document.getElementById('back-to-list-button');
+
+            if (backButton) {
+                backButton.addEventListener('click', () => {
+                    detailsContainer.classList.add('hidden');
+                    listContainer.classList.remove('hidden');
+                    listContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            }
+            
+            // Initialize Lucide Icons
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
